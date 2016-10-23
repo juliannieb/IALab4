@@ -11,8 +11,8 @@ struct node {
 	string key;
 	vector<node*> parents;
 	map<string, int> idxOfParents;
-	map<string, double> probabilitiesTable;
-	double probability;
+	map<string, float> probabilitiesTable;
+	float probability;
 };
 
 typedef struct node Node;
@@ -22,7 +22,7 @@ Node* initializeNode(string key) {
 	new_node -> key = key;
 	new_node -> parents = vector<Node*>(0);
 	new_node -> idxOfParents = map<string, int>();
-	new_node -> probabilitiesTable = map<string, double>();
+	new_node -> probabilitiesTable = map<string, float>();
 	new_node -> probability = 0.0;
 	return new_node;
 }
@@ -55,10 +55,8 @@ vector<string> split(string complete_string, char c) {
 	return ans;
 }
 
-pair< vector<Node*>, map<string, Node*> > readNodes() {
+void readNodes(vector<Node*> &nodes, map<string, Node*> &nodes_map) {
 	string line;
-	vector<Node*> nodes = vector<Node*>(0);
-	map<string, Node*> nodes_map;
 	getline(cin, line);
 	line = remove_chars(line, ' ');
 	vector<string> nodeKeys = split(line, ',');
@@ -68,8 +66,28 @@ pair< vector<Node*>, map<string, Node*> > readNodes() {
 		nodes.push_back(new_node);
 		nodes_map[node_key] = new_node;
 	}
-	pair< vector<Node*>, map<string, Node*> > readed_nodes = pair< vector<Node*>, map<string, Node*> >(nodes, nodes_map);
-	return readed_nodes;
+}
+
+void printParents(vector<Node*> parents) {
+	cout << "Parents: " << endl;
+	for (int i = 0; i < parents.size(); i++) {
+		cout << "\t" << parents[i] -> key << (i < parents.size() - 1 ? ", " : "\n");
+	}
+}
+
+void printProbabilities(map<string, float> probabilitiesTable) {
+	typedef map<string, float>::iterator it_type;
+	cout << "Probabilities:" << endl;
+	for(it_type iterator = probabilitiesTable.begin(); iterator != probabilitiesTable.end(); iterator++) {
+	    cout << "\t" << iterator -> first << " - " << iterator -> second << endl;
+	}
+}
+
+void printNode(Node *node) {
+	cout << "Node: " << node -> key << endl;
+	printParents(node -> parents);
+	printProbabilities(node -> probabilitiesTable);
+	cout << endl;
 }
 
 void printNodes(vector<Node*> nodes) {
@@ -79,9 +97,49 @@ void printNodes(vector<Node*> nodes) {
 	}
 }
 
+void printNodesMap(map<string, Node*> nodes_map) {
+	typedef map<string, Node*>::iterator it_type;
+	for(it_type iterator = nodes_map.begin(); iterator != nodes_map.end(); iterator++) {
+	    cout << iterator -> first << " - " << iterator -> second << endl;
+	}
+}
+
+void addParents(Node *node, vector<string> &evidenceKeys, map<string, Node*> &nodes_map) {
+	for (int i = 0; i < evidenceKeys.size(); i++) {
+		string parentKey = evidenceKeys[i].substr(1, evidenceKeys[i].size()-1);
+		if (!((node -> idxOfParents).count(parentKey))) {
+			(node -> idxOfParents)[parentKey] = (node -> parents).size();
+			Node *parentNode = nodes_map[parentKey];
+			(node -> parents).push_back(parentNode);
+		}
+	}
+}
+
 void set_probabilities(map<string, Node*> &nodes_map, string query, string evidence, string probability) {
 	float prob = atof(probability.c_str());
-	cout << "prob = " << prob << endl;
+	if (query[0] == '-')
+		prob = 1 - prob;
+	query = query.substr(1, query.size()-1);
+	Node *queryNode = nodes_map[query];
+	if (evidence == "") {
+		(queryNode -> probability) = prob;
+	}
+	else {
+		vector<string> evidenceKeys = split(evidence, ',');
+		addParents(queryNode, evidenceKeys, nodes_map);
+		string probKey = "";
+		for (int i = 0; i < evidenceKeys.size(); i++)
+			probKey += '0';
+		for (int i = 0; i < evidenceKeys.size(); i++) {
+			char sign = evidenceKeys[i][0];
+			string parentKey = evidenceKeys[i].substr(1, evidenceKeys[i].size()-1);
+			int parentIdx = (queryNode -> idxOfParents)[parentKey];
+			//cout << "parent key idx = " << parentIdx << endl;
+			probKey[parentIdx] = (sign == '+' ? '1' : '0');
+		}
+		(queryNode -> probabilitiesTable)[probKey] = prob;
+		//printNode(queryNode);
+	}
 }
 
 void read_probabilities(vector<Node*> &nodes, map<string, Node*> &nodes_map) {
@@ -102,34 +160,33 @@ void read_probabilities(vector<Node*> &nodes, map<string, Node*> &nodes_map) {
 		if (query_and_evidence.size() == 2) {
 			string query = query_and_evidence[0];
 			string evidence = query_and_evidence[1];
-			cout << "Query: " << query_and_evidence[0] << " --- Evidence: " << evidence << " --- " << prob << endl;
+			//cout << "Query: " << query_and_evidence[0] << " --- Evidence: " << evidence << " --- " << prob << endl;
+			set_probabilities(nodes_map, query, evidence, prob);
 		}
 		else {
 			string query = query_and_evidence[0];
-			cout << "Query: " << query_and_evidence[0] << " --- " << prob << endl;
+			//cout << "Query: " << query_and_evidence[0] << " --- " << prob << endl;
+			set_probabilities(nodes_map, query, "", prob);
 		}
 	}
 }
 
 int main () {
 	string input_type;
-	getline(cin, input_type);
-	pair< vector<Node*>, map<string, Node*> > readed_nodes;
-	vector<Node*> nodes;
-	map<string, Node*> nodes_map;
-	if (input_type == "[Nodes]") {
-		readed_nodes = readNodes();
-		nodes = readed_nodes.first;
-		nodes_map = readed_nodes.second;
-		printNodes(nodes);
-	}
-	getline(cin, input_type);
-	if (input_type == "[Probabilities]") {
-		read_probabilities(nodes, nodes_map);
-	}
-	getline(cin, input_type);
-	if (input_type == "[Queries]") {
+	vector<Node*> nodes = vector<Node*>(0);
+	map<string, Node*> nodes_map = map<string, Node*> ();
+	while(getline(cin, input_type)) {
+		if (input_type == "[Nodes]") {
+			readNodes(nodes, nodes_map);
+		}
+		//getline(cin, input_type);
+		if (input_type == "[Probabilities]") {
+			read_probabilities(nodes, nodes_map);
+		}
+		//getline(cin, input_type);
+		if (input_type == "[Queries]") {
 
+		}
 	}
 	return 0;
 }
