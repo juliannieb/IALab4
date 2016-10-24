@@ -4,6 +4,8 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <set>
+#include <stack>
 
 using namespace std;
 
@@ -187,9 +189,38 @@ void read_queries(vector<Node*> &nodes, map<string, Node*> &nodes_map) {
 				char sign = queries[i][0];
 				string nodeKey = queries[i].substr(1, queries[i].size()-1);
 				Node *node = nodes_map[nodeKey];
-				prob *= (sign == '+' ? node -> probability : (1.0 - node -> probability));
+				if ((node -> parents).size() == 0) {
+					prob *= (sign == '+' ? node -> probability : (1.0 - node -> probability));
+				}
+				else {
+					double aux_prob = 0.0;
+					typedef map<string, float>::iterator it_type;
+					map<string, float> probabilitiesTable = node -> probabilitiesTable;
+					for(it_type iterator = probabilitiesTable.begin(); iterator != probabilitiesTable.end(); iterator++) {
+					    aux_prob += iterator -> second;
+					}
+					prob *= (sign == '+' ? aux_prob : (1 - aux_prob));
+				}
 			}
 			cout << prob << endl;
+		}
+	}
+}
+
+void getHidden(set<Node*> &hidden, stack<Node*> &nodesStack) {
+	while(!nodesStack.empty()) {
+		Node *node = nodesStack.top();
+		nodesStack.pop();
+		if (!hidden.count(node)) {
+			hidden.insert(node);
+		}
+		vector<Node*> parents = node -> parents;
+		for (int i = 0; i < parents.size(); i++) {
+			Node *parent = parents[i];
+			if (!hidden.count(parent)) {
+				hidden.insert(parent);
+				nodesStack.push(parent);
+			}
 		}
 	}
 }
