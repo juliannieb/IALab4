@@ -85,6 +85,7 @@ void printProbabilities(map<string, float> probabilitiesTable) {
 
 void printNode(Node *node) {
 	cout << "Node: " << node -> key << endl;
+	cout << "Probability: " << node -> probability << endl;
 	printParents(node -> parents);
 	printProbabilities(node -> probabilitiesTable);
 	cout << endl;
@@ -138,13 +139,12 @@ void set_probabilities(map<string, Node*> &nodes_map, string query, string evide
 			probKey[parentIdx] = (sign == '+' ? '1' : '0');
 		}
 		(queryNode -> probabilitiesTable)[probKey] = prob;
-		//printNode(queryNode);
 	}
+	//printNode(queryNode);
 }
 
 void read_probabilities(vector<Node*> &nodes, map<string, Node*> &nodes_map) {
 	string line;
-	getline(cin, line);
 	while(getline(cin, line)) {
 		if (line.empty()) {
 			//cout << "Empty" << endl;
@@ -171,6 +171,29 @@ void read_probabilities(vector<Node*> &nodes, map<string, Node*> &nodes_map) {
 	}
 }
 
+void read_queries(vector<Node*> &nodes, map<string, Node*> &nodes_map) {
+	string line;
+	while(getline(cin, line)) {
+		line = remove_chars(line, ' ');
+		vector<string> query_and_evidence = split(line, '|');
+		string query = query_and_evidence[0];
+		vector<string> queries = split(query, ',');
+		if (query_and_evidence.size() > 1) {
+
+		}
+		else {
+			double prob = 1.0;
+			for (int i = 0; i < queries.size(); i++) {
+				char sign = queries[i][0];
+				string nodeKey = queries[i].substr(1, queries[i].size()-1);
+				Node *node = nodes_map[nodeKey];
+				prob *= (sign == '+' ? node -> probability : (1.0 - node -> probability));
+			}
+			cout << prob << endl;
+		}
+	}
+}
+
 int main () {
 	string input_type;
 	vector<Node*> nodes = vector<Node*>(0);
@@ -185,7 +208,7 @@ int main () {
 		}
 		//getline(cin, input_type);
 		if (input_type == "[Queries]") {
-
+			read_queries(nodes, nodes_map);
 		}
 	}
 	return 0;
