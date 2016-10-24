@@ -207,7 +207,7 @@ void read_queries(vector<Node*> &nodes, map<string, Node*> &nodes_map) {
 	}
 }
 
-void getHidden(set<Node*> &hidden, stack<Node*> &nodesStack) {
+void getRelevant(set<Node*> &hidden, stack<Node*> &nodesStack) {
 	while(!nodesStack.empty()) {
 		Node *node = nodesStack.top();
 		nodesStack.pop();
@@ -223,6 +223,50 @@ void getHidden(set<Node*> &hidden, stack<Node*> &nodesStack) {
 			}
 		}
 	}
+}
+
+float getProbability(string nodeKey, string probKey, map<string, *Node> &nodes_map){
+	float prob = 1.0;
+	char sign = nodeKey[0];
+	nodeKey = nodeKey.substr(1, nodeKey.size() - 1);
+	Node *node = nodes_map[nodeKey];
+	if ((node->parents).size() > 0){
+		prob = sign == '+' ? (node->probabilitiesTable)[probKey] : 1 - (node->probabilitiesTable)[probKey];
+	}
+	else{
+		prob = sign == '+' ? (node->probability) : 1 - (node->probability);
+	}
+	return prob;
+}	
+
+string getSigns(vector<string> probability, Node *node){
+	string signs = "";
+	for (int i = 0; i < (node->parents).size(); i++){
+		signs += '0';
+	}
+	for (int i = 0; i < probability.size(); i++){
+		char sign = probability[i][0];
+		string nodeKey = probability[i].substr(1, probability[i].size() - 1);
+		if (sign == '+'){
+			int parentIndex = node->idxOfParents[nodeKey];
+			signs[parentIndex] = '1';
+		}
+	}
+	return signs;
+}
+
+float calculateChainRule(vector<string> query, map<string, *Node> &nodes_map){
+	float prob = 1.0;
+	string signs = "";
+	string nodeKey = "";
+	for (int i = 0; i < query.size(); i++){
+		nodeKey = query[i].substr(1, query[i].size() - 1);
+		Node *node = nodes_map[nodeKey];
+		vector<string> letters(&query.begin() + 1, &query.end(), node);
+		signs = getSigns(letters, );
+		prob *= getProbability(query[i], signs);
+	}	
+	return prob;
 }
 
 int main () {
