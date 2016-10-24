@@ -173,6 +173,61 @@ void read_probabilities(vector<Node*> &nodes, map<string, Node*> &nodes_map) {
 	}
 }
 
+vector<string> principalNodes(vector<string> queries, vector<string> evidence) {
+	vector<string> principalNodes = vector<string>();
+	for (int i = 0; i < queries.size(); i++) {
+		principalNodes.push_back(queries[i]);
+	}
+	for (int i = 0; i < evidence.size(); i++) {
+		principalNodes.push_back(evidence[i]);
+	}
+	return principalNodes;
+}
+
+string principalNodesContain(string nodeKey, vector<string> principalNodes) {
+	for (int i = 0; i < principalNodes.size(); i++) {
+		char sign = principalNodes[i][0];
+		string principalNodeKey = principalNodes[i].substr(1, principalNodes[i].size()-1);
+		if (principalNodeKey == nodeKey)
+			return principalNodes[i];
+	}
+	return "";
+}
+
+vector<string> getRelevant(set<Node*> &relevantSet, stack<Node*> &nodesStack, vector<string> &mainNodes) {
+	vector<string> relevant = vector<string>();
+	while(!nodesStack.empty()) {
+		Node *node = nodesStack.top();
+		nodesStack.pop();
+		if (!relevantSet.count(node)) {
+			string containedInPrincipalNodes = principalNodesContain(node->key, mainNodes);
+			if (containedInPrincipalNodes != "") {
+				relevant.push_back(containedInPrincipalNodes);
+			}
+			else {
+				relevant.push_back(node->key);
+			}
+			relevantSet.insert(node);
+		}
+		vector<Node*> parents = node -> parents;
+		for (int i = 0; i < parents.size(); i++) {
+			Node *parent = parents[i];
+			if (!relevantSet.count(parent)) {
+				string containedInPrincipalNodes = principalNodesContain(parent->key, mainNodes);
+				if (containedInPrincipalNodes != "") {
+					relevant.push_back(containedInPrincipalNodes);
+				}
+				else {
+					relevant.push_back(parent->key);
+				}
+				relevantSet.insert(parent);
+				nodesStack.push(parent);
+			}
+		}
+	}
+	return relevant;
+}
+
 void read_queries(vector<Node*> &nodes, map<string, Node*> &nodes_map) {
 	string line;
 	while(getline(cin, line)) {
@@ -181,7 +236,20 @@ void read_queries(vector<Node*> &nodes, map<string, Node*> &nodes_map) {
 		string query = query_and_evidence[0];
 		vector<string> queries = split(query, ',');
 		if (query_and_evidence.size() > 1) {
-
+			string evidenceString = query_and_evidence[1];
+			vector<string> evidence = split(evidenceString, ',');
+			vector<string> mainNodes = principalNodes(queries, evidence);
+			for (int i = 0; i < queries.size(); i++) {
+				string nodeKey = queries[i].substr(1, queries[i].size()-1);
+				Node *node = nodes_map[nodeKey];
+				set<Node*> relevantSet = set<Node*>();
+				stack<Node*> nodesStack = stack<Node*>();
+				nodesStack.push(node);
+				vector<string> relevant = getRelevant(relevantSet, nodesStack, mainNodes);
+				for (int i = 0; i < relevant.size(); i++) {
+					cout << relevant[i] << (i == relevant.size() - 1 ? '\n' : ' ');
+				}
+			}
 		}
 		else {
 			double prob = 1.0;
@@ -193,6 +261,7 @@ void read_queries(vector<Node*> &nodes, map<string, Node*> &nodes_map) {
 					prob *= (sign == '+' ? node -> probability : (1.0 - node -> probability));
 				}
 				else {
+					/*
 					double aux_prob = 0.0;
 					typedef map<string, float>::iterator it_type;
 					map<string, float> probabilitiesTable = node -> probabilitiesTable;
@@ -200,27 +269,22 @@ void read_queries(vector<Node*> &nodes, map<string, Node*> &nodes_map) {
 					    aux_prob += iterator -> second;
 					}
 					prob *= (sign == '+' ? aux_prob : (1 - aux_prob));
+					*/
+					vector<string> mainNodes = principalNodes(queries, vector<string>());
+					for (int i = 0; i < queries.size(); i++) {
+						string nodeKey = queries[i].substr(1, queries[i].size()-1);
+						Node *node = nodes_map[nodeKey];
+						set<Node*> relevantSet = set<Node*>();
+						stack<Node*> nodesStack = stack<Node*>();
+						nodesStack.push(node);
+						vector<string> relevant = getRelevant(relevantSet, nodesStack, mainNodes);
+						for (int i = 0; i < relevant.size(); i++) {
+							cout << relevant[i] << (i == relevant.size() - 1 ? '\n' : ' ');
+						}
+					}
 				}
 			}
-			cout << prob << endl;
-		}
-	}
-}
-
-void getHidden(set<Node*> &hidden, stack<Node*> &nodesStack) {
-	while(!nodesStack.empty()) {
-		Node *node = nodesStack.top();
-		nodesStack.pop();
-		if (!hidden.count(node)) {
-			hidden.insert(node);
-		}
-		vector<Node*> parents = node -> parents;
-		for (int i = 0; i < parents.size(); i++) {
-			Node *parent = parents[i];
-			if (!hidden.count(parent)) {
-				hidden.insert(parent);
-				nodesStack.push(parent);
-			}
+			//cout << prob << endl;
 		}
 	}
 }
