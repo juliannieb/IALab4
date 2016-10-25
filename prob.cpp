@@ -199,8 +199,29 @@ string principalNodesContain(string nodeKey, vector<string> principalNodes) {
 	return "";
 }
 
+int num_ancestors(Node *node) {
+	stack<Node*> nodesStack = stack<Node*>();
+	set<Node*> nodesSet = set<Node*>();
+	nodesStack.push(node);
+	nodesSet.insert(node);
+	int ancestors = 0;
+	while(!nodesStack.empty()) {
+		node = nodesStack.top();
+		nodesStack.pop();
+		for (int i = 0; i < (node -> parents).size(); i++) {
+			Node *parent = (node -> parents)[i];
+			if (!nodesSet.count(parent)) {
+				ancestors++;
+				nodesSet.insert(parent);
+			}
+		}
+		
+	}
+	return ancestors;
+}
+
 bool compareNodes(Node *i, Node *j) {
-	return ((i -> parents).size() > (j -> parents).size());
+	return (num_ancestors(i) > num_ancestors(j));
 }
 
 vector<string> getRelevant(set<Node*> &relevantSet, stack<Node*> &nodesStack, vector<string> &mainNodes) {
@@ -283,22 +304,24 @@ void read_queries(vector<Node*> &nodes, map<string, Node*> &nodes_map) {
 				stack<Node*> nodesStack = stack<Node*>();
 				nodesStack.push(node);
 				vector<string> relevant = getRelevant(relevantSet, nodesStack, mainNodes);
-				for (int i = 0; i < relevant.size(); i++) {
-					cout << relevant[i] << (i == relevant.size() - 1 ? '\n' : ' ');
+				for (int j = 0; j < relevant.size(); j++) {
+					cout << relevant[j] << (j == relevant.size() - 1 ? '\n' : ' ');
 				}
 				vector< vector<string> > comb = vector< vector<string> >(0, vector<string>());
 				combinations(0, relevant, vector<string>(), comb);
 				printCombinations(comb);
 
-
-				string evidenceNodeKey = evidence[0].substr(1, evidence[0].size()-1);
-				Node *evidenceNode = nodes_map[evidenceNodeKey];
 				set<Node*> relevantEvidenceSet = set<Node*>();
 				stack<Node*> evidenceNodesStack = stack<Node*>();
-				evidenceNodesStack.push(evidenceNode);
+				for (int j = 0; j < evidence.size(); j++) {
+					string evidenceNodeKey = evidence[j].substr(1, evidence[j].size()-1);
+					Node *evidenceNode = nodes_map[evidenceNodeKey];
+					evidenceNodesStack.push(evidenceNode);
+				}
+				
 				vector<string> relevantEvidence = getRelevant(relevantEvidenceSet, evidenceNodesStack, evidence);
-				for (int i = 0; i < relevantEvidence.size(); i++) {
-					cout << relevantEvidence[i] << (i == relevantEvidence.size() - 1 ? '\n' : ' ');
+				for (int j = 0; j < relevantEvidence.size(); j++) {
+					cout << relevantEvidence[j] << (j == relevantEvidence.size() - 1 ? '\n' : ' ');
 				}
 				vector< vector<string> > combEvidence = vector< vector<string> >(0, vector<string>());
 				combinations(0, relevantEvidence, vector<string>(), combEvidence);
