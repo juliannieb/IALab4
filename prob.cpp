@@ -309,11 +309,11 @@ void read_queries(vector<Node*> &nodes, map<string, Node*> &nodes_map) {
 			//nodesStack.push(node);
 			vector<string> relevant = getRelevant(relevantSet, nodesStack, mainNodes);
 			for (int j = 0; j < relevant.size(); j++) {
-				cout << relevant[j] << (j == relevant.size() - 1 ? '\n' : ' ');
+				//cout << relevant[j] << (j == relevant.size() - 1 ? '\n' : ' ');
 			}
 			vector< vector<string> > comb = vector< vector<string> >(0, vector<string>());
 			combinations(0, relevant, vector<string>(), comb);
-			printCombinations(comb);
+			//printCombinations(comb);
 
 			set<Node*> relevantEvidenceSet = set<Node*>();
 			stack<Node*> evidenceNodesStack = stack<Node*>();
@@ -325,14 +325,14 @@ void read_queries(vector<Node*> &nodes, map<string, Node*> &nodes_map) {
 			
 			vector<string> relevantEvidence = getRelevant(relevantEvidenceSet, evidenceNodesStack, evidence);
 			for (int j = 0; j < relevantEvidence.size(); j++) {
-				cout << relevantEvidence[j] << (j == relevantEvidence.size() - 1 ? '\n' : ' ');
+				//cout << relevantEvidence[j] << (j == relevantEvidence.size() - 1 ? '\n' : ' ');
 			}
 			vector< vector<string> > combEvidence = vector< vector<string> >(0, vector<string>());
 			combinations(0, relevantEvidence, vector<string>(), combEvidence);
-			printCombinations(combEvidence);
+			//printCombinations(combEvidence);
 
 			float prob  = prob = calculateChainRule(comb, nodes_map)/calculateChainRule(combEvidence, nodes_map);
-			cout << "Chain Rule Probability with evidence: " << prob << endl;
+			cout << prob << endl;
 
 		}
 		else {
@@ -343,7 +343,7 @@ void read_queries(vector<Node*> &nodes, map<string, Node*> &nodes_map) {
 				Node *node = nodes_map[nodeKey];
 				if ((node -> parents).size() == 0) {
 					prob *= (sign == '+' ? node -> probability : (1.0 - node -> probability));
-					cout << "Probability without parents: " << prob << endl;
+					cout << prob << endl;
 				}
 				else {
 					vector<string> mainNodes = principalNodes(queries, vector<string>());
@@ -355,19 +355,18 @@ void read_queries(vector<Node*> &nodes, map<string, Node*> &nodes_map) {
 						nodesStack.push(node);
 						vector<string> relevant = getRelevant(relevantSet, nodesStack, mainNodes);
 						for (int i = 0; i < relevant.size(); i++) {
-							cout << relevant[i] << (i == relevant.size() - 1 ? '\n' : ' ');
+							//cout << relevant[i] << (i == relevant.size() - 1 ? '\n' : ' ');
 						}
 						vector< vector<string> > comb = vector< vector<string> >(0, vector<string>());
 						combinations(0, relevant, vector<string>(), comb);
-						printCombinations(comb);
+						//printCombinations(comb);
 						prob = calculateChainRule(comb, nodes_map);
-						cout << "Chain Rule Probability: " << prob << endl;
+						cout << prob << endl;
 					}
 				}
 			}
 			//cout << prob << endl;
 		}
-		cout << endl;
 	}
 }
 
