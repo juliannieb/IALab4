@@ -6,6 +6,7 @@
 #include <string>
 #include <set>
 #include <stack>
+#include <algorithm>
 
 using namespace std;
 
@@ -194,38 +195,70 @@ string principalNodesContain(string nodeKey, vector<string> principalNodes) {
 	return "";
 }
 
+bool compareNodes(Node *i, Node *j) {
+	return ((i -> parents).size() > (j -> parents).size());
+}
+
 vector<string> getRelevant(set<Node*> &relevantSet, stack<Node*> &nodesStack, vector<string> &mainNodes) {
 	vector<string> relevant = vector<string>();
+	vector<Node*> relevantNodes = vector<Node*>();
 	while(!nodesStack.empty()) {
 		Node *node = nodesStack.top();
 		nodesStack.pop();
 		if (!relevantSet.count(node)) {
-			string containedInPrincipalNodes = principalNodesContain(node->key, mainNodes);
-			if (containedInPrincipalNodes != "") {
-				relevant.push_back(containedInPrincipalNodes);
-			}
-			else {
-				relevant.push_back(node->key);
-			}
+			relevantNodes.push_back(node);
 			relevantSet.insert(node);
 		}
 		vector<Node*> parents = node -> parents;
 		for (int i = 0; i < parents.size(); i++) {
 			Node *parent = parents[i];
 			if (!relevantSet.count(parent)) {
-				string containedInPrincipalNodes = principalNodesContain(parent->key, mainNodes);
-				if (containedInPrincipalNodes != "") {
-					relevant.push_back(containedInPrincipalNodes);
-				}
-				else {
-					relevant.push_back(parent->key);
-				}
+				relevantNodes.push_back(parent);
 				relevantSet.insert(parent);
 				nodesStack.push(parent);
 			}
 		}
 	}
+	sort(relevantNodes.begin(), relevantNodes.end(), compareNodes);
+	for (int i = 0; i < relevantNodes.size(); i++) {
+		Node *node = relevantNodes[i];
+		string containedInPrincipalNodes = principalNodesContain(node->key, mainNodes);
+		if (containedInPrincipalNodes != "") {
+			relevant.push_back(containedInPrincipalNodes);
+		}
+		else {
+			relevant.push_back(node->key);
+		}
+	}
 	return relevant;
+}
+
+void combinations(int idx, vector<string> initial, vector<string> curr, vector< vector<string> > &ans) {
+	if (curr.size() == initial.size()) {
+		ans.push_back(curr);
+	}
+	else {
+		if (initial[idx][0] == '+' || initial[idx][0] == '-') {
+			curr.push_back(initial[idx]);
+			combinations(idx+1, initial, curr, ans);
+		}
+		else {
+			curr.push_back('+' + initial[idx]);
+			combinations(idx+1, initial, curr, ans);
+			curr.pop_back();
+			curr.push_back('-' + initial[idx]);
+			combinations(idx+1, initial, curr, ans);
+		}
+	}
+}
+
+void printCombinations(vector< vector <string> > &comb) {
+	for (int i = 0; i < comb.size(); i++) {
+		for (int j = 0; j < comb[i].size(); j++) {
+			cout << comb[i][j] << " ";
+		}
+		cout << endl;
+	}
 }
 
 void read_queries(vector<Node*> &nodes, map<string, Node*> &nodes_map) {
@@ -249,6 +282,9 @@ void read_queries(vector<Node*> &nodes, map<string, Node*> &nodes_map) {
 				for (int i = 0; i < relevant.size(); i++) {
 					cout << relevant[i] << (i == relevant.size() - 1 ? '\n' : ' ');
 				}
+				vector< vector<string> > comb = vector< vector<string> >(0, vector<string>());
+				combinations(0, relevant, vector<string>(), comb);
+				printCombinations(comb);
 			}
 		}
 		else {
@@ -281,11 +317,15 @@ void read_queries(vector<Node*> &nodes, map<string, Node*> &nodes_map) {
 						for (int i = 0; i < relevant.size(); i++) {
 							cout << relevant[i] << (i == relevant.size() - 1 ? '\n' : ' ');
 						}
+						vector< vector<string> > comb = vector< vector<string> >(0, vector<string>());
+						combinations(0, relevant, vector<string>(), comb);
+						printCombinations(comb);
 					}
 				}
 			}
 			//cout << prob << endl;
 		}
+		cout << endl;
 	}
 }
 
