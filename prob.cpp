@@ -21,7 +21,7 @@ struct node {
 typedef struct node Node;
 
 float getProbability(string nodeKey, string probKey, map<string, Node*> &nodes_map);
-float calculateChainRule(vector<string> query, map<string, Node*> &nodes_map);
+float calculateChainRule(vector< vector <string> > query, map<string, Node*> &nodes_map);
 string getSigns(vector<string> probability, Node *node);
 
 Node* initializeNode(string key) {
@@ -273,6 +273,7 @@ void read_queries(vector<Node*> &nodes, map<string, Node*> &nodes_map) {
 		string query = query_and_evidence[0];
 		vector<string> queries = split(query, ',');
 		if (query_and_evidence.size() > 1) {
+			double prob = 1.0;
 			string evidenceString = query_and_evidence[1];
 			vector<string> evidence = split(evidenceString, ',');
 			vector<string> mainNodes = principalNodes(queries, evidence);
@@ -288,7 +289,31 @@ void read_queries(vector<Node*> &nodes, map<string, Node*> &nodes_map) {
 				}
 				vector< vector<string> > comb = vector< vector<string> >(0, vector<string>());
 				combinations(0, relevant, vector<string>(), comb);
+				cout << "QUERY: " << endl;
 				printCombinations(comb);
+
+				string evidenceNodeKey = evidence[i].substr(1, evidence[i].size()-1);
+
+				cout << "NODE KEY: " << evidenceNodeKey << endl;
+
+				Node *evidenceNode = nodes_map[evidenceNodeKey];
+
+				set<Node*> relevantEvidenceSet = set<Node*>();
+				stack<Node*> evidenceNodesStack = stack<Node*>();
+				evidenceNodesStack.push(evidenceNode);
+				vector<string> relevantEvidence = getRelevant(relevantEvidenceSet, evidenceNodesStack, mainNodes);
+
+				for (int i = 0; i < relevantEvidence.size(); i++) {
+					cout << relevantEvidence[i] << (i == relevantEvidence.size() - 1 ? '\n' : ' ');
+				}
+				vector< vector<string> > evidenceComb = vector< vector<string> >(0, vector<string>());
+				combinations(0, relevantEvidence, vector<string>(), evidenceComb);
+				cout << "EVIDENCE: " << endl;
+				printCombinations(evidenceComb);
+
+				prob = calculateChainRule(comb, nodes_map)/calculateChainRule(evidenceComb, nodes_map);
+				cout << "Chain Rule Probability with evidence: " << prob << endl;
+				cout << calculateChainRule(comb, nodes_map) << ", " << calculateChainRule(evidenceComb, nodes_map)<< endl;
 			}
 		}
 		else {
@@ -299,17 +324,9 @@ void read_queries(vector<Node*> &nodes, map<string, Node*> &nodes_map) {
 				Node *node = nodes_map[nodeKey];
 				if ((node -> parents).size() == 0) {
 					prob *= (sign == '+' ? node -> probability : (1.0 - node -> probability));
+					cout << "Chain Rule Probability: " << prob << endl;
 				}
 				else {
-					/*
-					double aux_prob = 0.0;
-					typedef map<string, float>::iterator it_type;
-					map<string, float> probabilitiesTable = node -> probabilitiesTable;
-					for(it_type iterator = probabilitiesTable.begin(); iterator != probabilitiesTable.end(); iterator++) {
-					    aux_prob += iterator -> second;
-					}
-					prob *= (sign == '+' ? aux_prob : (1 - aux_prob));
-					*/
 					vector<string> mainNodes = principalNodes(queries, vector<string>());
 					for (int i = 0; i < queries.size(); i++) {
 						string nodeKey = queries[i].substr(1, queries[i].size()-1);
@@ -325,7 +342,7 @@ void read_queries(vector<Node*> &nodes, map<string, Node*> &nodes_map) {
 						combinations(0, relevant, vector<string>(), comb);
 						printCombinations(comb);
 						prob = calculateChainRule(comb, nodes_map);
-						cout << prob << endl;
+						cout << "Chain Rule Probability: " << prob << endl;
 					}
 				}
 			}
@@ -336,22 +353,24 @@ void read_queries(vector<Node*> &nodes, map<string, Node*> &nodes_map) {
 }
 
 float calculateChainRule(vector< vector<string> > query, map<string, Node*> &nodes_map){
-	float prob = 1.0;
+	float prob = 0.0;
 	string signs = "";
 	string nodeKey = "";
 	for (int i = 0; i < query.size(); i++){
+		float prob2 = 1.0;
 		for (int j = 0; j < query[i].size(); j++){
-			nodeKey = query[j].substr(1, query[j].size() - 1);
+			nodeKey = query[i][j].substr(1, query[i][j].size() - 1);
 			cout << "Node key: " << nodeKey << endl;
 			Node *node = nodes_map[nodeKey];
-			vector<string>::const_iterator first = query.begin() + j + 1;
-			vector<string>::const_iterator last = query.end();
+			vector<string>::const_iterator first = query[i].begin() + j + 1;
+			vector<string>::const_iterator last = query[i].end();
 			vector<string> letters(first, last);
 			signs = getSigns(letters, node);
-			cout << "get Signs" << endl;
-			prob *= getProbability(query[i][j], signs, nodes_map);
-			cout << "get Prob" << endl;
-		}	
+			cout << "Get Signs: " << signs << endl;
+			prob2 *= getProbability(query[i][j], signs, nodes_map);
+			cout << "Get Prob: " << prob2 << endl;
+		}
+		prob += prob2;
 	}
 	return prob;
 }
@@ -373,14 +392,14 @@ float getProbability(string nodeKey, string probKey, map<string, Node*> &nodes_m
 string getSigns(vector<string> probability, Node *node){
 	string signs = "";
 
-	cout << "getting signs..." << endl;
-	printNode(node);
-	cout << (node->parents).size() << endl;
+	//cout << "getting signs..." << endl;
+	//printNode(node);
+	//cout << (node->parents).size() << endl;
 	for (int i = 0; i < (node->parents).size(); i++){
 		signs += '0';
 	}
-	cout << signs << endl;
-	cout << probability.size() << endl;
+	//cout << signs << endl;
+	//cout << probability.size() << endl;
 
 	for (int i = 0; i < probability.size(); i++){
 		char sign = probability[i][0];
