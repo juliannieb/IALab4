@@ -213,6 +213,7 @@ int num_ancestors(Node *node) {
 			if (!nodesSet.count(parent)) {
 				ancestors++;
 				nodesSet.insert(parent);
+				nodesStack.push(parent);
 			}
 		}
 		
