@@ -302,7 +302,12 @@ void read_queries(vector<Node*> &nodes, map<string, Node*> &nodes_map) {
 				Node *node = nodes_map[nodeKey];
 				set<Node*> relevantSet = set<Node*>();
 				stack<Node*> nodesStack = stack<Node*>();
-				nodesStack.push(node);
+				for (int j = 0; j < mainNodes.size(); j++) {
+					string mainNodeKey = mainNodes[j].substr(1, mainNodes[j].size()-1);
+					Node *mainNode = nodes_map[mainNodeKey];
+					nodesStack.push(mainNode);
+				}
+				//nodesStack.push(node);
 				vector<string> relevant = getRelevant(relevantSet, nodesStack, mainNodes);
 				for (int j = 0; j < relevant.size(); j++) {
 					cout << relevant[j] << (j == relevant.size() - 1 ? '\n' : ' ');
