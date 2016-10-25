@@ -20,6 +20,8 @@ struct node {
 typedef struct node Node;
 
 float getProbability(string nodeKey, string probKey, map<string, Node*> &nodes_map);
+float calculateChainRule(vector<string> query, map<string, Node*> &nodes_map);
+string getSigns(vector<string> probability, Node *node);
 
 Node* initializeNode(string key) {
 	Node *new_node = new Node;
@@ -283,6 +285,8 @@ void read_queries(vector<Node*> &nodes, map<string, Node*> &nodes_map) {
 						for (int i = 0; i < relevant.size(); i++) {
 							cout << relevant[i] << (i == relevant.size() - 1 ? '\n' : ' ');
 						}
+						prob = calculateChainRule(relevant, nodes_map);
+						cout << prob << endl;
 					}
 				}
 			}
@@ -291,23 +295,23 @@ void read_queries(vector<Node*> &nodes, map<string, Node*> &nodes_map) {
 	}
 }
 
-void getRelevant(set<Node*> &hidden, stack<Node*> &nodesStack) {
-	while(!nodesStack.empty()) {
-		Node *node = nodesStack.top();
-		nodesStack.pop();
-		if (!hidden.count(node)) {
-			hidden.insert(node);
-		}
-		vector<Node*> parents = node -> parents;
-		for (int i = 0; i < parents.size(); i++) {
-			Node *parent = parents[i];
-			if (!hidden.count(parent)) {
-				hidden.insert(parent);
-				nodesStack.push(parent);
-			}
-			//cout << prob << endl;
-		}
-	}
+float calculateChainRule(vector<string> query, map<string, Node*> &nodes_map){
+	float prob = 1.0;
+	string signs = "";
+	string nodeKey = "";
+	for (int i = 0; i < query.size(); i++){
+		nodeKey = query[i].substr(1, query[i].size() - 1);
+		cout << "Node key: " << nodeKey << endl;
+		Node *node = nodes_map[nodeKey];
+		vector<string>::const_iterator first = query.begin() + i + 1;
+		vector<string>::const_iterator last = query.end();
+		vector<string> letters(first, last);
+		signs = getSigns(letters, node);
+		cout << "get Signs" << endl;
+		prob *= getProbability(query[i], signs, nodes_map);
+		cout << "get Prob" << endl;
+	}	
+	return prob;
 }
 
 float getProbability(string nodeKey, string probKey, map<string, Node*> &nodes_map){
@@ -326,9 +330,16 @@ float getProbability(string nodeKey, string probKey, map<string, Node*> &nodes_m
 
 string getSigns(vector<string> probability, Node *node){
 	string signs = "";
+
+	cout << "getting signs..." << endl;
+	printNode(node);
+	cout << (node->parents).size() << endl;
 	for (int i = 0; i < (node->parents).size(); i++){
 		signs += '0';
 	}
+	cout << signs << endl;
+	cout << probability.size() << endl;
+
 	for (int i = 0; i < probability.size(); i++){
 		char sign = probability[i][0];
 		string nodeKey = probability[i].substr(1, probability[i].size() - 1);
@@ -338,20 +349,6 @@ string getSigns(vector<string> probability, Node *node){
 		}
 	}
 	return signs;
-}
-
-float calculateChainRule(vector<string> query, map<string, Node*> &nodes_map){
-	float prob = 1.0;
-	string signs = "";
-	string nodeKey = "";
-	for (int i = 0; i < query.size(); i++){
-		nodeKey = query[i].substr(1, query[i].size() - 1);
-		Node *node = nodes_map[nodeKey];
-		vector<string> letters(query.begin() + 1, query.end());
-		signs = getSigns(letters, node);
-		prob *= getProbability(query[i], signs, nodes_map);
-	}	
-	return prob;
 }
 
 int main () {
