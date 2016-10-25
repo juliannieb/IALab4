@@ -273,7 +273,6 @@ void read_queries(vector<Node*> &nodes, map<string, Node*> &nodes_map) {
 		string query = query_and_evidence[0];
 		vector<string> queries = split(query, ',');
 		if (query_and_evidence.size() > 1) {
-			double prob = 1.0;
 			string evidenceString = query_and_evidence[1];
 			vector<string> evidence = split(evidenceString, ',');
 			vector<string> mainNodes = principalNodes(queries, evidence);
@@ -289,32 +288,26 @@ void read_queries(vector<Node*> &nodes, map<string, Node*> &nodes_map) {
 				}
 				vector< vector<string> > comb = vector< vector<string> >(0, vector<string>());
 				combinations(0, relevant, vector<string>(), comb);
-				cout << "QUERY: " << endl;
 				printCombinations(comb);
 
-				string evidenceNodeKey = evidence[i].substr(1, evidence[i].size()-1);
 
-				cout << "NODE KEY: " << evidenceNodeKey << endl;
-
+				string evidenceNodeKey = evidence[0].substr(1, evidence[0].size()-1);
 				Node *evidenceNode = nodes_map[evidenceNodeKey];
-
 				set<Node*> relevantEvidenceSet = set<Node*>();
 				stack<Node*> evidenceNodesStack = stack<Node*>();
 				evidenceNodesStack.push(evidenceNode);
-				vector<string> relevantEvidence = getRelevant(relevantEvidenceSet, evidenceNodesStack, mainNodes);
-
+				vector<string> relevantEvidence = getRelevant(relevantEvidenceSet, evidenceNodesStack, evidence);
 				for (int i = 0; i < relevantEvidence.size(); i++) {
 					cout << relevantEvidence[i] << (i == relevantEvidence.size() - 1 ? '\n' : ' ');
 				}
-				vector< vector<string> > evidenceComb = vector< vector<string> >(0, vector<string>());
-				combinations(0, relevantEvidence, vector<string>(), evidenceComb);
-				cout << "EVIDENCE: " << endl;
-				printCombinations(evidenceComb);
+				vector< vector<string> > combEvidence = vector< vector<string> >(0, vector<string>());
+				combinations(0, relevantEvidence, vector<string>(), combEvidence);
+				printCombinations(combEvidence);
 
-				prob = calculateChainRule(comb, nodes_map)/calculateChainRule(evidenceComb, nodes_map);
+				float prob  = prob = calculateChainRule(comb, nodes_map)/calculateChainRule(combEvidence, nodes_map);
 				cout << "Chain Rule Probability with evidence: " << prob << endl;
-				cout << calculateChainRule(comb, nodes_map) << ", " << calculateChainRule(evidenceComb, nodes_map)<< endl;
 			}
+
 		}
 		else {
 			double prob = 1.0;
@@ -324,7 +317,7 @@ void read_queries(vector<Node*> &nodes, map<string, Node*> &nodes_map) {
 				Node *node = nodes_map[nodeKey];
 				if ((node -> parents).size() == 0) {
 					prob *= (sign == '+' ? node -> probability : (1.0 - node -> probability));
-					cout << "Chain Rule Probability: " << prob << endl;
+					cout << "Probability without parents: " << prob << endl;
 				}
 				else {
 					vector<string> mainNodes = principalNodes(queries, vector<string>());
@@ -360,15 +353,15 @@ float calculateChainRule(vector< vector<string> > query, map<string, Node*> &nod
 		float prob2 = 1.0;
 		for (int j = 0; j < query[i].size(); j++){
 			nodeKey = query[i][j].substr(1, query[i][j].size() - 1);
-			cout << "Node key: " << nodeKey << endl;
+			//cout << "Node key: " << nodeKey << endl;
 			Node *node = nodes_map[nodeKey];
 			vector<string>::const_iterator first = query[i].begin() + j + 1;
 			vector<string>::const_iterator last = query[i].end();
 			vector<string> letters(first, last);
 			signs = getSigns(letters, node);
-			cout << "Get Signs: " << signs << endl;
+			//cout << "get Signs" << endl;
 			prob2 *= getProbability(query[i][j], signs, nodes_map);
-			cout << "Get Prob: " << prob2 << endl;
+			//cout << "get Prob" << endl;
 		}
 		prob += prob2;
 	}
