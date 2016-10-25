@@ -297,44 +297,41 @@ void read_queries(vector<Node*> &nodes, map<string, Node*> &nodes_map) {
 			string evidenceString = query_and_evidence[1];
 			vector<string> evidence = split(evidenceString, ',');
 			vector<string> mainNodes = principalNodes(queries, evidence);
-			for (int i = 0; i < queries.size(); i++) {
-				string nodeKey = queries[i].substr(1, queries[i].size()-1);
-				Node *node = nodes_map[nodeKey];
-				set<Node*> relevantSet = set<Node*>();
-				stack<Node*> nodesStack = stack<Node*>();
-				for (int j = 0; j < mainNodes.size(); j++) {
-					string mainNodeKey = mainNodes[j].substr(1, mainNodes[j].size()-1);
-					Node *mainNode = nodes_map[mainNodeKey];
-					nodesStack.push(mainNode);
-				}
-				//nodesStack.push(node);
-				vector<string> relevant = getRelevant(relevantSet, nodesStack, mainNodes);
-				for (int j = 0; j < relevant.size(); j++) {
-					cout << relevant[j] << (j == relevant.size() - 1 ? '\n' : ' ');
-				}
-				vector< vector<string> > comb = vector< vector<string> >(0, vector<string>());
-				combinations(0, relevant, vector<string>(), comb);
-				printCombinations(comb);
-
-				set<Node*> relevantEvidenceSet = set<Node*>();
-				stack<Node*> evidenceNodesStack = stack<Node*>();
-				for (int j = 0; j < evidence.size(); j++) {
-					string evidenceNodeKey = evidence[j].substr(1, evidence[j].size()-1);
-					Node *evidenceNode = nodes_map[evidenceNodeKey];
-					evidenceNodesStack.push(evidenceNode);
-				}
-				
-				vector<string> relevantEvidence = getRelevant(relevantEvidenceSet, evidenceNodesStack, evidence);
-				for (int j = 0; j < relevantEvidence.size(); j++) {
-					cout << relevantEvidence[j] << (j == relevantEvidence.size() - 1 ? '\n' : ' ');
-				}
-				vector< vector<string> > combEvidence = vector< vector<string> >(0, vector<string>());
-				combinations(0, relevantEvidence, vector<string>(), combEvidence);
-				printCombinations(combEvidence);
-
-				float prob  = prob = calculateChainRule(comb, nodes_map)/calculateChainRule(combEvidence, nodes_map);
-				cout << "Chain Rule Probability with evidence: " << prob << endl;
+			
+			set<Node*> relevantSet = set<Node*>();
+			stack<Node*> nodesStack = stack<Node*>();
+			for (int j = 0; j < mainNodes.size(); j++) {
+				string mainNodeKey = mainNodes[j].substr(1, mainNodes[j].size()-1);
+				Node *mainNode = nodes_map[mainNodeKey];
+				nodesStack.push(mainNode);
 			}
+			//nodesStack.push(node);
+			vector<string> relevant = getRelevant(relevantSet, nodesStack, mainNodes);
+			for (int j = 0; j < relevant.size(); j++) {
+				cout << relevant[j] << (j == relevant.size() - 1 ? '\n' : ' ');
+			}
+			vector< vector<string> > comb = vector< vector<string> >(0, vector<string>());
+			combinations(0, relevant, vector<string>(), comb);
+			printCombinations(comb);
+
+			set<Node*> relevantEvidenceSet = set<Node*>();
+			stack<Node*> evidenceNodesStack = stack<Node*>();
+			for (int j = 0; j < evidence.size(); j++) {
+				string evidenceNodeKey = evidence[j].substr(1, evidence[j].size()-1);
+				Node *evidenceNode = nodes_map[evidenceNodeKey];
+				evidenceNodesStack.push(evidenceNode);
+			}
+			
+			vector<string> relevantEvidence = getRelevant(relevantEvidenceSet, evidenceNodesStack, evidence);
+			for (int j = 0; j < relevantEvidence.size(); j++) {
+				cout << relevantEvidence[j] << (j == relevantEvidence.size() - 1 ? '\n' : ' ');
+			}
+			vector< vector<string> > combEvidence = vector< vector<string> >(0, vector<string>());
+			combinations(0, relevantEvidence, vector<string>(), combEvidence);
+			printCombinations(combEvidence);
+
+			float prob  = prob = calculateChainRule(comb, nodes_map)/calculateChainRule(combEvidence, nodes_map);
+			cout << "Chain Rule Probability with evidence: " << prob << endl;
 
 		}
 		else {
